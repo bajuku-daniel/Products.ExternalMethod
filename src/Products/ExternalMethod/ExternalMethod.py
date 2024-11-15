@@ -247,11 +247,33 @@ class ExternalMethod(Item, Persistent, Explicit,
     def module(self):
         return self._module
 
+    def getExtensionsPath(self):
+        """ Get the extensions path from the product configuration.
+         otherwise use the default path in instance home. """
+        zope_config = getConfiguration()
+        default_path = 'Extensions'
+
+        product_config = getattr(zope_config, 'product_config', dict())
+        ext_config = product_config.get('products.externalmethod', dict())  
+        extensions_path = ext_config.get('extensions', default_path)
+
+        return extensions_path
+    
+    
     def filepath(self):
+        """Return the path to the file containing the external method if exists.
+        First we try to get the path from the product configuration, if not found
+        we use the default path in instance home."""
         if not hasattr(self, '_v_filepath'):
-            self._v_filepath = getPath('Extensions', self._module,
-                                       suffixes=('', 'py', 'pyc', 'pyp'))
+            # get the extensions path from the product configuration or use the default path
+            extensions_path = self.getExtensionsPath()
+            if extensions_path:
+                self._v_filepath = getPath(extensions_path, self._module, suffixes=('', 'py', 'pyc', 'pyp'))
+            else:    
+                # Fallback to default path
+                self._v_filepath = getPath('Extensions', self._module, suffixes=('', 'py', 'pyc', 'pyp'))
         return self._v_filepath
+
 
 
 InitializeClass(ExternalMethod)
